@@ -11,49 +11,49 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerText}>Mi Perfil</Text>
+        <Text style={styles.headerText}>Perfil</Text>
       </View>
 
-      <View style={styles.container}>
+      <View style={styles.profileContainer}>
         <Pressable style={styles.button} onPress={onPress}>
-          <Text style={styles.buttonText}>Salir</Text>
+          <Text style={styles.buttonText}>Cerrar sesión</Text>
         </Pressable>
       </View>
-    </SafeAreaView>
+    </View>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
+    backgroundColor: "#fff",
   },
   header: {
-    width: "100%",
-    height: "25%",
-    padding: 16,
+    height: 100,
     justifyContent: "center",
-    backgroundColor: "#014AC1",
+    alignItems: "center",
+    backgroundColor: "#014AC1"
   },
   headerText: {
-    fontSize: 35,
+    fontSize: 32,
     fontWeight: "bold",
     color: "#fff",
   },
-  container: {
-    padding: 16,
+  profileContainer: {
+    padding: 16
   },
   button: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 14,
-    borderRadius: 4,
+    height: 48,
+    borderRadius: 24,
     elevation: 3,
-    backgroundColor: "red",
+    backgroundColor: "#014AC1",
   },
   buttonText: {
     fontSize: 16,
     color: "#fff",
-  },
+  }
 });

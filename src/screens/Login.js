@@ -34,8 +34,8 @@ export default function LoginScreen() {
     }
   };
 
-  const emailInputStyle = { borderWidth: 2, borderColor: borderColor.email, padding: 12, borderRadius: 4 };
-  const passwordInputStyle = { borderWidth: 2, borderColor: borderColor.password, padding: 12, borderRadius: 4 };
+  const emailInputStyle = { borderWidth: 2, borderColor: borderColor.email, height: 48, paddingHorizontal: 16, borderRadius: 4 };
+  const passwordInputStyle = { borderWidth: 2, borderColor: borderColor.password, height: 48, paddingHorizontal: 16, borderRadius: 4 };
 
   return (
     <View style={styles.container}>
@@ -83,17 +83,16 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#014AC1",
+    backgroundColor: "#fff",
   },
   header: {
-    width: "100%",
-    height: "25%",
-    padding: 16,
+    height: 100,
     justifyContent: "center",
-    backgroundColor: "#014AC1",
+    alignItems: "center",
+    backgroundColor: "#014AC1"
   },
   headerText: {
-    fontSize: 35,
+    fontSize: 32,
     fontWeight: "bold",
     color: "#fff",
   },
@@ -107,7 +106,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#FFFFFF",
   },
   formTitle: {
-    fontSize: 35,
+    fontSize: 32,
     fontWeight: "bold",
     color: "#014AC1",
   },
@@ -128,8 +127,8 @@ const styles = StyleSheet.create({
   button: {
     alignItems: "center",
     justifyContent: "center",
-    padding: 14,
-    borderRadius: 4,
+    height: 48,
+    borderRadius: 24,
     elevation: 3,
     backgroundColor: "#014AC1",
   },

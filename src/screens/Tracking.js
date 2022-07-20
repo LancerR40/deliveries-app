@@ -1,71 +1,130 @@
-import { useState, useEffect } from "react";
-import { StyleSheet, SafeAreaView, View, Dimensions } from "react-native";
-import MapView, { Marker, PROVIDER_GOOGLE } from "react-native-maps";
+import { useState, useEffect, useCallback } from "react";
+import { StyleSheet, RefreshControl, View, ScrollView, Dimensions, Text, Pressable  } from "react-native"
+import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import * as Location from "expo-location";
+import { useShipmentContext } from "../contexts/shipment"
+import { shipmentTrackingAPI } from "../api/shipments"
+
+const wait = timeout => {
+  return new Promise(resolve => setTimeout(resolve, timeout));
+};
 
 export default function TrackingScreen() {
-  const [locationPermission, setLocationPermission] = useState(false);
+  const { shipments, setShipments, getShipments } = useShipmentContext()
+  const [refreshing, setRefreshing] = useState(false);
 
-  const [position, setPosition] = useState(null);
-  const [destination, setDestionation] = useState({ latitude: 10.909745, longitude: -71.749526 });
+  const [permissions, setPermissions] = useState({ foregroundPermission: false })
+  const [currentPosition, setCurrentPosition] = useState(null);
 
-  useEffect(() => {
-    getLocationPermission();
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await getShipments()
+    setRefreshing(false)
   }, []);
 
   useEffect(() => {
-    if (locationPermission) {
-      getLocation();
-    }
-  }, [locationPermission]);
+    getForegroundPermission();
+  }, [])
+  
+  useEffect(() => {
+    getInitialPosition()
+  }, [permissions.foregroundPermission])
 
-  const getLocation = async () => {
-    const { coords } = await Location.getCurrentPositionAsync({});
-    const { latitude, longitude } = coords;
+  // useEffect(() => {
+  //   let interval = null
 
-    setPosition({ latitude, longitude, latitudeDelta: 0.09, longitudeDelta: 0.04 });
-  };
+  //   if (!shipments.active && interval) {
+  //     return clearInterval(interval)
+  //   }
 
-  const getLocationPermission = async () => {
+  //   if (shipments.active) {
+  //     interval = setInterval(async () => {
+  //       const { latitude, longitude } = await getCurrentPosition()
+  //       // const data = { shipmentId: shipments.active.shipmentId, driverPosition: { latitude, longitude }, shipmentDestination: { latitude: Number(shipments.active.shipmentDescription.destination.latitude), longitude: Number(shipments.active.shipmentDescription.destination.longitude )} }
+        
+  //       // const response = await shipmentTrackingAPI(data);
+  //     }, 45000)
+  //   }
+
+  //   return () => {
+  //     if (interval) {
+  //       clearInterval(interval)
+  //     }
+  //   }
+  // }, [shipments.active])
+
+  const getForegroundPermission = async () => {
     const { status } = await Location.requestForegroundPermissionsAsync();
 
     if (status !== "granted") {
-      return alert("Debes aceptar los permisos de localización.");
+      return alert("Debes aceptar los permisos de localización para continuar.");
     }
 
-    setLocationPermission(!locationPermission);
-  };
+    setPermissions((state) => ({ ...state, foregroundPermission: true }))
+  }
 
-  if (!position) {
-    return null;
+  const getInitialPosition = async () => {
+    const { latitude, longitude } = await getCurrentPosition()
+    setCurrentPosition({ latitude, longitude, latitudeDelta: 0.09, longitudeDelta: 0.04 })
+  }
+
+  const getCurrentPosition = async () => {
+    const { coords: { latitude, longitude } } = await Location.getCurrentPositionAsync({});
+    return { latitude, longitude }
   }
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <View style={styles.container}>
-        <MapView
-          style={styles.map}
-          provider={PROVIDER_GOOGLE}
-          region={position}
-          showsUserLocation
-          userLocationAnnotationTitle="Hello"
-        >
-          <Marker coordinate={{ latitude: 10.614843, longitude: -71.634769 }} title="Fabrica"></Marker>
+    <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      {/* If not allow permission */}
+      {!permissions.foregroundPermission && (
+        <View style={styles.notMapRenderedContainer}>
+          <Text style={{ color: "gray", textAlign: "center", maxWidth: 280, marginBottom: 16 }}>Necesitas otorgar permisos de ubicación para continuar.</Text>
+          <Pressable style={styles.foregroundPermissionButton} onPress={getForegroundPermission}>
+            <Text style={styles.foregroundPermissionButtonText}>Otorgar permisos</Text>
+          </Pressable>
+        </View>
+      )}
+
+       {/* If permission is allowed */}
+      {permissions.foregroundPermission && currentPosition && (
+        <MapView style={styles.map} provider={PROVIDER_GOOGLE} region={currentPosition} showsUserLocation>
+          {shipments.active && (
+            <>
+              <Marker title={shipments.active.shipmentDescription.address} coordinate={{ latitude: Number(shipments.active.shipmentDescription.destination.latitude), longitude: Number(shipments.active.shipmentDescription.destination.longitude) }} />
+              <Polyline coordinates={[{ latitude: currentPosition.latitude, longitude: currentPosition.longitude }, { latitude: Number(shipments.active.shipmentDescription.destination.latitude), longitude: Number(shipments.active.shipmentDescription.destination.longitude) } ]} strokeColor="#3b82f6" strokeWidth={3} />
+            </>
+          )}
         </MapView>
-      </View>
-    </SafeAreaView>
-  );
-}
+      )}
+    </ScrollView>
+  )
+};
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#fff",
+  },
+  notMapRenderedContainer: {
+    height: Dimensions.get("window").height,
+    justifyContent: "center",
+    alignItems: "center"
+  },
+  foregroundPermissionButton: {
     alignItems: "center",
     justifyContent: "center",
+    width: 200,
+    height: 48,
+    borderRadius: 24,
+    elevation: 3,
+    backgroundColor: "#014AC1",
+  },
+  foregroundPermissionButtonText: {
+    fontSize: 16,
+    color: "#fff",
   },
   map: {
     width: Dimensions.get("window").width,
-    height: "100%",
+    height: Dimensions.get("window").height
   },
 });
