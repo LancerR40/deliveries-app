@@ -13,7 +13,7 @@ export default function LoginScreen() {
   const [borderColor, setBorderColor] = useState({ email: "#E5E7EB", password: "#E5E7EB" });
 
   const notify = (type, title, message) => {
-    return (Dialog.show({ type, title, textBody: message, button: 'close', }))
+    return (Dialog.show({ type, title, textBody: message, button: 'Ok', }))
   }
 
   const onFocus = (name) => {
@@ -42,7 +42,7 @@ export default function LoginScreen() {
     }
 
     if (!response.success) {
-      notify(ALERT_TYPE.DANGER, "Credenciales incorrectas")
+      notify(ALERT_TYPE.DANGER, "Credenciales incorrectas", response.error.message)
     }
 
     if (response.success) {

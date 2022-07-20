@@ -13,7 +13,7 @@ export default function ShipmentScreen({ navigation  }) {
   const [refreshing, setRefreshing] = useState(false);
 
   const notify = (type, title, message) => {
-    return (Dialog.show({ type, title, textBody: message, button: 'close', }))
+    return (Dialog.show({ type, title, textBody: message, button: 'Ok', }))
   }
 
   const onRefresh = useCallback(async () => {
