@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import { Root } from 'react-native-alert-notification';
 
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -70,9 +71,11 @@ const Router = () => {
 export default function App() {
   return (
     <>
-      <AuthContextProvider>
-        <Router />
-      </AuthContextProvider>
+      <Root>
+        <AuthContextProvider>
+          <Router />
+        </AuthContextProvider>
+      </Root>
 
       <StatusBar style="inverted" />
     </>

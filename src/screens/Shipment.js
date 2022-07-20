@@ -1,9 +1,27 @@
-import { View, FlatList, Text, StyleSheet, Pressable } from "react-native";
+import { View, FlatList, Text, StyleSheet, Pressable, RefreshControl } from "react-native";
+import { useState, useCallback } from "react"
+import { useAuthContext } from "../contexts/auth"
 import { useShipmentContext } from "../contexts/shipment"
+import { confirmShipmentAPI, cancelShipmentAPI } from "../api/shipments"
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 import { MaterialCommunityIcons, AntDesign, MaterialIcons } from '@expo/vector-icons';
+import * as SecureStore from "expo-secure-store";
 
 export default function ShipmentScreen({ navigation  }) {
-  const { shipments, setShipments } = useShipmentContext()
+  const { setIsAuth } = useAuthContext()
+  const { shipments, setShipments, getShipments } = useShipmentContext()
+  const [refreshing, setRefreshing] = useState(false);
+
+  const notify = (type, title, message) => {
+    return (Dialog.show({ type, title, textBody: message, button: 'close', }))
+  }
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await getShipments()
+    setRefreshing(false)
+  }, []);
+
   const data = shipments?.all?.map((shipment) => {
     const { idShipment, shipmentDescription: { address, origin, destination }, shipmentStatusName, idShipmentStatus, shipmentCreatedAt } = shipment
     let icon = null
@@ -21,8 +39,46 @@ export default function ShipmentScreen({ navigation  }) {
       icon = <MaterialIcons name="cancel" size={iconSize} color="#ef4444" />
     }
 
-    return { key: idShipment, address, origin, destination, idShipmentStatus, shipmentStatusName, shipmentCreatedAt, icon }
+    return { key: idShipment, shipmentId: idShipment, address, origin, destination, idShipmentStatus, shipmentStatusName, shipmentCreatedAt, icon }
   }).reverse()
+
+  const onPress = async () => {
+    if (!shipments?.active?.idShipment) {
+      return
+    }
+
+    const response = await confirmShipmentAPI({ shipmentId: shipments.active.idShipment })
+
+    if (response?.response?.status >= 401) {
+      await SecureStore.deleteItemAsync("token")
+      return setIsAuth(false)
+    }
+
+    if (response.success) {
+      setRefreshing(true)
+      getShipments()
+      setRefreshing(false)
+
+      return notify(ALERT_TYPE.SUCCESS, "Envío confirmado", response.data.message)
+    }
+  }
+
+  const cancel = async (shipmentId) => {
+    const response = await cancelShipmentAPI({ shipmentId })
+
+    if (response?.response?.status >= 401) {
+      await SecureStore.deleteItemAsync("token")
+      return setIsAuth(false)
+    }
+
+    if (response.success) {
+      setRefreshing(true)
+      getShipments()
+      setRefreshing(false)
+
+      return notify(ALERT_TYPE.DANGER, "Envío cancelado", response.data.message)
+    }
+  }
 
   const buttonBackground = { backgroundColor: shipments.active ? "#014AC1" : "#e8e8e8" }
  
@@ -32,7 +88,7 @@ export default function ShipmentScreen({ navigation  }) {
         <Text style={styles.headerText}>Envíos</Text>
       </View>
 
-      <FlatList contentContainerStyle={styles.shipmentsContainer} data={data} renderItem={({ item }) => (
+      <FlatList refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />} style={{ flex: 1 }} contentContainerStyle={styles.shipmentsContainer} data={data} renderItem={({ item }) => (
         <View style={[styles.card, styles.shadowProp]}>
           <View style={{ width: 80, justifyContent: "center", alignItems: "center" }}>
             {item.icon}
@@ -42,7 +98,7 @@ export default function ShipmentScreen({ navigation  }) {
             <Text style={{ color: "#fff", fontWeight: "700", marginTop: 4, }}>Fecha: <Text style={{ fontWeight: "400", fontSize: 12 }}>       {item.shipmentCreatedAt}</Text></Text>
             <View style={{ marginTop: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end" }}>
               {item.idShipmentStatus === 2 ? (
-                <Pressable style={{ height: 30, paddingHorizontal: 16, justifyContent: "center", alignItems: "flex-end", borderRadius: 24, backgroundColor: "#ef4444" }}>
+                <Pressable style={{ height: 30, paddingHorizontal: 16, justifyContent: "center", alignItems: "flex-end", borderRadius: 24, backgroundColor: "#ef4444" }} onPress={() => cancel(item.shipmentId)}>
                   <Text style={{ color: "#fff", fontWeight: "700" }}>Cancelar</Text>
                 </Pressable>
               ) : <View />}
@@ -54,7 +110,7 @@ export default function ShipmentScreen({ navigation  }) {
       )} />
 
       <View style={styles.buttonContainer}>
-        <Pressable style={[styles.completedButton, buttonBackground]}>
+        <Pressable style={[styles.completedButton, buttonBackground]} onPress={onPress} disabled={shipments.active ? false : true}>
           <Text style={styles.completedButtonText}>Confirmar envío</Text>
         </Pressable>
       </View>
@@ -79,7 +135,7 @@ const styles = StyleSheet.create({
     color: "#fff",
   },
   shipmentsContainer: {
-    flex: 1,
+    // flex: 1,
     padding: 16, 
   },
   card: {

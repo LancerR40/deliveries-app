@@ -16,11 +16,7 @@ export const AuthContextProvider = ({ children }) => {
 
     if (!response.success) {
       /* Hubo un token que fue rechazado... */
-
-      if (await SecureStore.getItemAsync("token")) {
-        await SecureStore.deleteItemAsync("token");
-      }
-
+      await SecureStore.deleteItemAsync("token");
       setIsAuth(false);
     }
 

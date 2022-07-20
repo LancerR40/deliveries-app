@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useAuthContext } from "../contexts/auth";
 import { loginAPI } from "../api/auth";
 import * as SecureStore from "expo-secure-store";
+import { ALERT_TYPE, Dialog } from 'react-native-alert-notification';
 
 export default function LoginScreen() {
   const { setIsAuth } = useAuthContext();
@@ -10,6 +11,10 @@ export default function LoginScreen() {
   const [email, onChangeEmail] = useState("");
   const [password, onChangePassword] = useState("");
   const [borderColor, setBorderColor] = useState({ email: "#E5E7EB", password: "#E5E7EB" });
+
+  const notify = (type, title, message) => {
+    return (Dialog.show({ type, title, textBody: message, button: 'close', }))
+  }
 
   const onFocus = (name) => {
     setBorderColor((state) => ({ ...state, [name]: "#014AC1" }));
@@ -20,10 +25,24 @@ export default function LoginScreen() {
   };
 
   const onPress = async () => {
+    if (!email) {
+      return notify(ALERT_TYPE.WARNING, "Correo requerido", "Debes agregar un correo para continuar.")
+    }
+
+    if (!password) {
+      return notify(ALERT_TYPE.WARNING, "Contraseña requerida", "Debes agregar una contraseña para continuar.")
+    }
+
     const response = await loginAPI({ email, password });
+    const statusCode = response?.response?.status
+
+    if (statusCode >= 401) {
+      await SecureStore.deleteItemAsync("token")
+      return setIsAuth(false)
+    }
 
     if (!response.success) {
-      alert(response.error.message);
+      notify(ALERT_TYPE.DANGER, "Credenciales incorrectas")
     }
 
     if (response.success) {

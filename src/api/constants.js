@@ -6,4 +6,6 @@ export const CHECK_SESSION_URL = `${BASE_URL}/auth/drivers/session`;
 export const LOGIN_URL = `${BASE_URL}/auth/drivers/login`;
 
 export const GET_ASSIGNED_SHIPMENT_URL = `${BASE_URL}/shipments/assigned`;
-export const SHIPMENT_TRACKING_URL = `${BASE_URL}/shipments/tracking`
+export const SHIPMENT_TRACKING_URL = `${BASE_URL}/shipments/tracking`;
+export const CONFIRM_SHIPMENT_URL = `${BASE_URL}/shipments/completed`;
+export const CANCEL_SHIPMENT_URL = `${BASE_URL}/shipments/canceled`;

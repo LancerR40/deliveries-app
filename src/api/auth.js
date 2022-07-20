@@ -17,7 +17,7 @@ export const checkSessionAPI = async () => {
 
     return request.data;
   } catch (error) {
-    return false;
+    return error
   }
 };
 
@@ -27,6 +27,6 @@ export const loginAPI = async (data) => {
 
     return request.data;
   } catch (error) {
-    return false;
+    return error
   }
 };
